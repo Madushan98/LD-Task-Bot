@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+celery[redis]
+sqlalchemy
+google-genai
+scikit-learn
+python-dotenv
