@@ -39,7 +39,7 @@ def should_approve_extension(reason: str, is_other_talent_available: bool) -> bo
     "You are a task assignment reviewer. A talent has requested an extension for the following reason:\n\n"
     f"\"{reason}\"\n\n"
     f"Is another talent available to take over the task? {is_other_talent_available}.\n\n"
-    "Based on this information, should we approve the extension request? Respond with only 'yes' or 'no'."
+    f"Based on the validity of the reason and the availability of other talent, should we approve the extension request? Approve the request only if the reason is valid, even if another talent is available. Respond with only 'yes' or 'no'."
 )
 
     try:

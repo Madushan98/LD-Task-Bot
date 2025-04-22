@@ -96,12 +96,11 @@ def evaluate_pending_extensions():
                 task.deadline = task.deadline + timedelta(hours=24)
                 result = "approved"
             else:
-                task.assigned = False
                 result = "rejected"
 
             assignment.extension_requested = False  # reset regardless
             assignment.extension_reason= ''
-            print(f"[EXTENSION {result.upper()}] Task {task.id} reassigned={not approved}")
+            print(f"[EXTENSION {result.upper()}] for Task {task.id} ")
 
         db.commit()
     finally:
