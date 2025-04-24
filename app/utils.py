@@ -36,11 +36,12 @@ def should_approve_extension(reason: str, is_other_talent_available: bool) -> bo
         bool: True if the extension should be approved, False otherwise.
     """
     prompt = (
-    "You are a task assignment reviewer. A talent has requested an extension for the following reason:\n\n"
-    f"\"{reason}\"\n\n"
-    f"Is another talent available to take over the task? {is_other_talent_available}.\n\n"
-    f"Based on the validity of the reason and the availability of other talent, should we approve the extension request? Approve the request only if the reason is valid, even if another talent is available. Respond with only 'yes' or 'no'."
-)
+    "As a task assignment reviewer, evaluate an extension request. "
+    "A talent needs more time due to the following reason: "
+    f"\"{reason}\". "
+    f"Another talent is {'available' if is_other_talent_available else 'not available'} to take over.\n\n"
+    "The extension should be approved if the reason provided is valid, regardless of whether another talent is available. "
+    "Respond with only 'yes' if the reason is valid, and 'no' otherwise.")
 
     try:
         # Generate a response from the model

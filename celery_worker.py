@@ -31,7 +31,7 @@ def assign_task():
     try:
         # Get tasks that are not currently assigned
         unassigned_tasks = db.query(Task).filter_by(assigned=False, completed=False).all()
-        print(f"Unassigned tasks: {[task.id for task in unassigned_tasks]}")
+        print("\n\n" + f"Unassigned tasks: {[task.id for task in unassigned_tasks]}" + "\n\n")
         talents = db.query(Talent).all()
 
         for task in unassigned_tasks:
@@ -59,9 +59,9 @@ def assign_task():
                     best_score = score
                     best_match = talent
 
-            print(f"Best score for task {task.id}: {best_score}")
+            print("\n\n" + f"Best score for task {task.id}: {best_score}" + "\n\n")
 
-            if best_match and best_score > 0.75:
+            if best_match and best_score > 0.70:
                 new_assignment = Assignment(
                     task_id=task.id,
                     talent_id=best_match.id,
@@ -79,12 +79,22 @@ def assign_task():
 def evaluate_pending_extensions():
     db = SessionLocal()
     try:
-        pending_assignments = db.query(Assignment).filter(Assignment.extension_requested == True).all()
+        pending_assignments = db.query(Assignment).filter(
+            Assignment.extension_requested == True
+        ).all()
+
+        if not pending_assignments:
+            print("\n\nNo pending extension requests found.\n\n")
+            return
+
         talents = db.query(Talent).all()
+        print(f"\n\nEvaluating {len(pending_assignments)} extension request(s)...\n\n")
 
         for assignment in pending_assignments:
             task = db.query(Task).filter(Task.id == assignment.task_id).first()
+
             if not task:
+                print(f"Task not found for Assignment ID {assignment.id}, skipping.")
                 continue
 
             reason = assignment.extension_reason or "No reason provided"
@@ -93,16 +103,19 @@ def evaluate_pending_extensions():
             approved = should_approve_extension(reason, is_other_talent_available)
 
             if approved:
-                task.deadline = task.deadline + timedelta(hours=24)
-                result = "approved"
+                task.deadline += timedelta(hours=24)
+                result = "APPROVED"
             else:
-                result = "rejected"
+                result = "REJECTED"
 
-            assignment.extension_requested = False  # reset regardless
-            assignment.extension_reason= ''
-            print(f"[EXTENSION {result.upper()}] for Task {task.id} ")
+            print(f"[EXTENSION {result}] Task ID: {task.id} | Assignment ID: {assignment.id} | Reason: '{reason}'")
+
+            # Always reset the extension fields
+            assignment.extension_requested = False
+            assignment.extension_reason = ""
 
         db.commit()
+        print("\n\nExtension evaluation completed and changes committed.\n\n")
     finally:
         db.close()
 
@@ -112,26 +125,29 @@ def unassign_expired_tasks():
     try:
         now = datetime.utcnow()
 
-        # Get all tasks that are currently assigned and not completed
+        # Get all tasks that are currently assigned and not completed and past deadline
         in_progress_tasks = db.query(Task).filter(
             Task.assigned == True,
             Task.completed == False,
-            Task.deadline < now  # deadline passed
+            Task.deadline < now
         ).all()
 
+        print(f"\n\nFound {len(in_progress_tasks)} expired tasks to unassign\n\n")
+
         for task in in_progress_tasks:
-            # Find the current active assignment
             assignment = db.query(Assignment).filter(
                 Assignment.task_id == task.id,
                 Assignment.status == AssignmentStatus.assigned
             ).first()
 
             if assignment:
+                print(f"Unassigning Task ID: {task.id} | Assignment ID: {assignment.id}")
                 assignment.status = AssignmentStatus.failed
                 task.assigned = False
                 db.add(assignment)
 
         db.commit()
+        print("\n\nExpired tasks unassigned \n\n")
     finally:
         db.close()
 
